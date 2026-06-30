@@ -159,8 +159,11 @@ fort.67 또는 fort.68 의 마지막 타임스탬프  ==  fort.15 의 STATIM
 ### ADCIRC GWCE 기준 (반묵시적)
 
 ```
-C = sqrt(g × h_max) × DT / dx_min   ≤  4  권고
+0  <  C = sqrt(g × h_max) × DT / dx_min   ≤  4  권고
 ```
+
+> **C > 0 필수 조건**: DT · h_max · dx_min 이 모두 양수여야 한다.  
+> 셋 중 하나라도 0 이하면 CFL 자체가 무의미하므로 수행 전 즉시 중단.
 
 ### 격자 해상도별 권고 DT
 

@@ -53,5 +53,6 @@
 [2026-06-30 18:52:03] post/REPORT_TEMPLATE.hwpx 수정
 [2026-06-30 18:52:03] post/2024_09_JONGDARI_202408201600_west/report/report_2024_09_JONGDARI_202408201600_west.hwpx 수정
 [2026-06-30 19:07:17] [#9] 모델 수행·디버깅 README 반영 (node4+6/NWS/시간정렬/트러블슈팅/알려진이슈), flow.sh·status.sh assets 추가
-[2026-07-01 00:00:00] [#5] submit/evidence/timestamps.txt 머지 충돌 해결 (SY·JM 항목 시간순 병합)
-[2026-07-01 00:00:00] [#6] submit/PROCESS_LOG_team_c_JM.md 수정 (ADCIRC mpi.sh 진단 우선순위 P1~P6 정의)
+[2026-06-30 19:30:23] [#9] 본모델 바람장 디버깅(interpR/NWS 320·20·19) + 시간정렬·노드구성·모니터링도구, PROCESS_LOG 반영
+[2026-07-01 00:00:00] [#5-JM] submit/evidence/timestamps.txt 머지 충돌 해결 (SY·JM 항목 시간순 병합)
+[2026-07-01 00:00:00] [#6-JM] submit/PROCESS_LOG_team_c_JM.md 수정 (ADCIRC mpi.sh 진단 우선순위 P1~P6 정의)

@@ -45,7 +45,25 @@
   - `gh` CLI 없음 → GitHub REST API(curl)로 Fork 메타 확인.
   - 구버전 git이라 `git restore` 미지원 → `git checkout --`로 템플릿 복구.
 
-### [#2] ...
+### [#2] 자동화 대상 폴더 분석 + 레거시 파이프라인 복구·현대화
+- 작성자(팀원): MS (C팀 팀장)
+- 목표: 실제 작업폴더(`/data1/syjeong/.../02_Hackathon`)의 GEO-ADCIRC 모델 스크립트를 읽고, 깨진 레거시 자동화를 "돌아가는 상태"로 복구한다.
+- 에이전트에게 시킨 것(실제 프롬프트 핵심 인용):
+  > "README_team_c.md 분석해 이게 우리 자동화 할 대상임"
+  > "현재 대상 폴더 보고 돌아가는 상황으로 만들어봐"
+- 사용한 기법(있으면): (b) 외부 도구·데이터 연동 — 서버 작업폴더 직접 탐색·스크립트 분석 / (c) 재사용 산출물 — `automation/` 드라이버·모니터 스크립트
+- 결과:
+  - 실제 모델 = ADCIRC+SWAN(`padcswan`, 992코어 MPI, wave01~28) 확인 → 본수행은 클러스터 전용.
+  - 레거시 `check-tsw_hotstart.sh`(2022)의 3가지 결함 발견·수정:
+    (1) 경로 하드코딩(`/home/storm/2022`) → 환경변수 분리,
+    (2) 단계 호출 불일치(03을 post로 호출, onlytide 누락) → `01_pre→02_model→03_onlytide→04_post`로 정정,
+    (3) `/tmp` 카운터 상태관리 → 영속 상태파일(처리완료 케이스 목록)로 견고화.
+  - `automation/run_pipeline.sh`(오케스트레이터) + `automation/check_typhoon.sh`(모니터) + `README.md` 작성.
+  - **DRY_RUN 테스트 통과**: 파이프라인 4단계 end-to-end 흐름 OK, 모니터 신규케이스 감지·중복방지·상태기록 OK.
+- 막힘 → 해결:
+  - 클러스터(mpirun) 없어 실측 불가 → `DRY_RUN=1` 안전모드 추가로 흐름 검증, 실제 수행은 mpirun 가용 시에만 허용.
+
+### [#3] ...
 (필요한 만큼 계속 추가)
 
 ---

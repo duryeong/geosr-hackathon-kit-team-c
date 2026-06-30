@@ -78,3 +78,6 @@
 [2026-07-01 00:00:00] [#6-JM] submit/PROCESS_LOG_team_c_JM.md 수정 (ADCIRC mpi.sh 진단 우선순위 P1~P6 정의)
 [2026-07-01 00:01:00] [#7-JM] automation/CHECK_PRIORITY.md 생성 (mpi.sh 수행 전 진단 우선순위 P1-a~P6 문서화)
 [2026-07-01 00:02:00] [#8-JM] automation/CHECK_DEV_PLAN.md 생성 (진단 스크립트 Phase별 개발 계획서)
+[2026-07-01 00:03:00] [#7-1-JM] CHECK_PRIORITY.md 수정 (P5↔P6 교체, CFL>0 조건, 병렬 흐름 전환)
+[2026-07-01 00:03:00] [#7-1-JM] CHECK_DEV_PLAN.md 수정 (P5↔P6 반영, Phase7 CFL>0 조건 추가)
+[2026-07-01 00:03:00] [#7-1-JM] submit/PROCESS_LOG_team_c_JM.md 수정 (#7-1 항목 추가)

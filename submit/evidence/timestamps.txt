@@ -2,6 +2,5 @@
 
 2026-06-30 12:59:16.538728649 +0900  submit/PROCESS_LOG_team_c_MS.md
 2026-06-30 12:40:08.681864160 +0900  submit/BEFORE_AFTER.md
-[2026-06-30 14:00:00] submit/PROCESS_LOG_team_c_JM.md 생성
-[2026-06-30 14:01:00] submit/PROCESS_LOG_team_c_JM.md 수정 (테스트 로그 #2 추가)
 [2026-06-30 13:18:53] submit/PROCESS_LOG_team_c_JM.md 생성
+[2026-06-30 13:20:51] [#2] C팀 README 작성 및 git 푸시 — README.md 교체, .gitignore 머지, GitHub push 완료

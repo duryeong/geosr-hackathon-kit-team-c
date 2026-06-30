@@ -40,6 +40,35 @@
 
 ---
 
+### [#2] 통합 자동화 시스템 작업 계획서 작성
+- 작성자(팀원): 박지민
+- 목표: Phase별 자동화 현황(완료/수작업/미구현)을 구분하고 JM 담당 파트를 명확히 정의한다.
+- 에이전트에게 시킨 것(실제 프롬프트 핵심 인용):
+  > "이 phase가 하나의 자동화 시스템으로 만들어져야해, 여기서 수작업이 들어가는 부분, 자동화 되어있는 부분을 구별해서 계획서를 만들어봐"
+  > "작업 계획 md 를 geosr-hackathon-kit-team-c 에 _JM.md 로 만들어줘"
+- 사용한 기법(있으면): (b) 도구연동 — check_typhoon.sh, run_pipeline.sh, automation/README.md, PROCESS_LOG_team_c_SY.md 분석
+- 결과:
+  - `WORK_PLAN_JM.md` 생성 — Phase 1~5 자동화 현황 표, 즉시 수정 가능한 버그(run_pipeline.sh padcirc 미연결), 우선순위 작업 순서 정리
+  - JM 담당 파트 확정: Phase 3~5 (가시화→에이전트→보고서) 구현
+- 막힘 → 해결: -
+
+---
+
+### [#3] Phase별 상세 개발 계획서 작성 (WORK_PLAN_JM.md 갱신)
+- 작성자(팀원): 박지민
+- 목표: SY 팀원의 최신 작업(가상태풍 테스트베드, 격자 정정, run_manual.sh)을 반영해 Phase 1~5 전체의 자동화 현황과 JM 담당 상세 구현 계획을 표로 정리한다.
+- 에이전트에게 시킨 것(실제 프롬프트 핵심 인용):
+  > "이제 phase 별로 상세 개발 계획 내용을 표로 정리하고 PLAN_JM.md 에 갱신해줘"
+- 사용한 기법(있으면): (b) 도구연동 — run_manual.sh, PROCESS_LOG_team_c_SY.md(#5 가상태풍), automation/README.md 분석
+- 결과:
+  - `WORK_PLAN_JM.md` 갱신: Phase 1~5 전체 흐름도 + 각 Phase별 상세 개발 항목 표 작성
+  - JM 담당 Phase 3~5 구현 계획 확정: post_to_agent.sh / ai_decision.py / generate_report.py
+  - [버그] run_pipeline.sh L85 padcirc 미연결 → 즉시 수정 대상으로 명시
+  - 전체 우선순위(🔥 즉시 → 1~3순위) 정리
+- 막힘 → 해결: -
+
+---
+
 ## 마무리 요약 (1~2줄)
 - 가장 효과적이었던 에이전트 활용법:
 - 다른 팀이 그대로 따라 하려면 필요한 것:

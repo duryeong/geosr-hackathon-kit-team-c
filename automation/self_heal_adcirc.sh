@@ -54,6 +54,7 @@ ENV_FAILTYPES="ADCPREP_FAIL MPI_ABORT RUN_TIMEOUT"
 
 MANUAL="https://adcirc.org/home/documentation/users-manual-v53/input-file-descriptions/model-parameter-and-periodic-boundary-condition-file-fort-15/"
 MANUAL2="https://adcirc.org/home/documentation/users-manual-v53/parameter-definitions/"
+PRIORITY_DOC="${PRIORITY_DOC:-$KIT_DIR/CHECK_PRIORITY.md}"  # 팀 진단 우선순위(JM) — 소넷 권위 가이드
 
 C0='\033[0m'; CB='\033[1m'; CG='\033[32m'; CR='\033[31m'; CY='\033[33m'
 say(){ printf "%b\n" "$*"; }
@@ -222,23 +223,35 @@ ${nwp}
 - fort.13에 실제 존재하는 속성명(불일치 점검용):
 ${f13names}
 
-=== ADCIRC v53 참조 (맹목 적용 말고 증거에 비추어 추론) ===
+=== ★ 팀 진단 우선순위 (CHECK_PRIORITY.md) — 최우선 권위 가이드 ★ ===
+아래는 우리 팀(JM)이 정리한 mpi.sh 진단 우선순위다. v53 매뉴얼과 충돌하면
+"이 셋업에서 무엇을 택할지"는 이 팀 가이드를 우선한다. 특히:
+  - P2: DT 는 반드시 > 0 (양수). 음수 DT(예측자-수정자)는 이 팀 기준에선 쓰지 않는다.
+  - P6: CFL 안정성 C = sqrt(g·h_max)·DT/dx_min ≤ 4 (권고). 발산이면 DT를
+        격자/수심 기준 CFL 충족 "양수" 값으로 줄여라(예: 100m 격자면 ≤ 2~5초).
+  - P3: NWP 속성명은 fort.13 속성명과 정확히 일치(불일치면 fort.15 이름 정정).
+  - P2: DRAMP 0.5~2.0 일 권고(<0.25일이면 초기충격 위험).
+─────────── CHECK_PRIORITY.md 전문 ───────────
+$(cat "$PRIORITY_DOC" 2>/dev/null || echo "(CHECK_PRIORITY.md 로드 실패)")
+──────────────────────────────────────────────
+
+=== ADCIRC v53 참조 (보조 — 위 팀 가이드와 충돌 시 팀 가이드 우선) ===
 - fort.15 페이지        : ${MANUAL}
 - 파라미터 정의 페이지  : ${MANUAL2}
-- 증거가 뒷받침할 때 쓸 수 있는 지침:
-   * 표고 발산(ErrorElev / Elevation.gt / 매우 큰 표고): 보통 범위내 레버는 DT 축소,
-     음수 DT로 예측자-수정자 전환, GWCE 가중 강화(TAU0/A00:B00:C00 를 더 implicit하게),
-     또는 DRAMP 연장. 가장 작은 유효 변경을 택하라.
-   * NaN/Infinity: 보통 같은 계열의 더 빠른 발산. DT를 더 크게 줄이거나 예측자-수정자 필요.
-   * 램프 구간(sim < DRAMP*86400) 실패: DRAMP 연장이 주 레버.
-   * "nodal attribute ... not found": 수치문제가 아님. fort.15의 잘못된 속성명을
-     fort.13에 존재하는 이름으로 정정. 수치값은 건드리지 마라.
-   필요하면 ./fort.13, ./fort.14(예: 최소요소크기→CFL), ./machine, ./mpi.sh 를 Read 해도 된다.
+- 보조 지침:
+   * 표고 발산(ErrorElev / Elevation.gt / 매우 큰 표고): CFL 위반이 1순위. P6에 따라
+     DT를 CFL 충족 "양수" 값으로 축소(부호 반전 금지 — P2). 부수적으로 GWCE 가중(TAU0/
+     A00:B00:C00) 강화나 DRAMP(0.5~2.0일) 조정도 가능하나, 1차 레버는 DT 양수 축소다.
+   * NaN/Infinity: 같은 CFL 계열의 더 빠른 발산. DT를 더 크게(양수로) 줄여라.
+   * 램프 구간(sim < DRAMP*86400) 실패: DRAMP를 0.5~2.0일 범위로 조정(P2).
+   * "nodal attribute ... not found": 수치문제 아님. fort.15 속성명을 fort.13에 있는
+     이름으로 정정(P3). 수치값은 건드리지 마라.
+   ./fort.13, ./fort.14(최소요소크기·최대수심→CFL 계산), ./machine, ./mpi.sh 를 Read 해도 된다.
 
 === 출력 ===
 1) ./fort.15 를 최소수정(형식 보존)으로 Edit 하라.
-2) 그 다음 한 단락으로: 바꾼 항목(old -> new), v53 근거 이유, 의지한 v53 파라미터를 적어라.
-   파일 전체를 다시 출력하지 마라.
+2) 그 다음 한 단락으로: 바꾼 항목(old -> new), 근거 이유, 의지한 CHECK_PRIORITY 항목(P#)과
+   v53 파라미터를 적어라. 파일 전체를 다시 출력하지 마라.
 PROMPT
 }
 

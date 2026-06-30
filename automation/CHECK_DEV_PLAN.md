@@ -188,6 +188,163 @@ else:
 
 ---
 
+## 함수별 세부 개발 내용
+
+### 공통 반환 타입 `CheckResult`
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `label` | str | `"P1-a"` 등 진단 ID |
+| `level` | str | `"PASS"` / `"WARN"` / `"FAIL"` / `"SKIP"` |
+| `messages` | list[str] | 출력 메시지 목록 |
+
+---
+
+### `parse_fort15(fort15_path)` — fort.15 파서
+
+| 항목 | 내용 |
+|------|------|
+| **입력** | `fort15_path: str` — fort.15 절대경로 |
+| **반환** | `dict` |
+| **예외** | 파싱 실패 시 `Fort15ParseError` raise → 전체 P2~P6 SKIP 처리 |
+
+| # | 구현 항목 | 처리 방법 |
+|---|-----------|-----------|
+| 1 | 토큰 스트림 생성 | 줄 단위 읽기 → `!` 이후 제거 → 공백 분리 → 단일 리스트로 flatten |
+| 2 | 고정 헤더 파싱 | 토큰[0]=RUNDES, [1]=RUNID, [2]=NFOVER ... 순서대로 소비 |
+| 3 | NWP 읽기 | `int(tokens[n])` 후 다음 NWP개 토큰(속성명)을 `NWP_ATTRS` 리스트로 소비 |
+| 4 | 이후 파라미터 파싱 | NWP 오프셋 이후 순서대로 IHOT·NWS·NOLIBF·DT·STATIM·RNDAY·DRAMP 추출 |
+| 5 | 반환 dict 구성 | `{ IHOT, NWS, NWP, NWP_ATTRS, NOLIBF, DT, STATIM, RNDAY, DRAMP }` |
+
+---
+
+### `check_p1a(run_dir)` — 필수파일 존재
+
+| 항목 | 내용 |
+|------|------|
+| **입력** | `run_dir: str` — 실행 디렉터리 경로 |
+| **반환** | `CheckResult` |
+
+| 체크 대상 | 판정 조건 | 레벨 |
+|-----------|-----------|------|
+| `adcprep` | 존재 AND 실행권한 (`os.access X_OK`) | 없거나 권한 없음 → FAIL |
+| `padcirc` | 존재 AND 실행권한 | 없거나 권한 없음 → FAIL |
+| `fort.14` | 존재 AND size > 0 | 없거나 빈 파일 → FAIL |
+| `fort.15` | 존재 AND size > 0 | 없거나 빈 파일 → FAIL |
+| `machine` | 존재 | 없음 → FAIL |
+
+---
+
+### `check_p1b(run_dir)` — NP 일관성
+
+| 항목 | 내용 |
+|------|------|
+| **입력** | `run_dir: str` |
+| **반환** | `CheckResult` |
+
+| # | 추출 대상 | 파싱 방법 | 레벨 |
+|---|-----------|-----------|------|
+| 1 | `mpi.sh` adcprep NP | `re.search(r'adcprep.*--np\s+(\d+)', line)` | 못 찾으면 WARN |
+| 2 | `mpi.sh` mpirun NP | `re.search(r'mpirun.*-n\s+(\d+)', line)` | 못 찾으면 WARN |
+| 3 | `machine` 슬롯 수 | `hostname:N` 형식이면 N 합산, 아니면 줄 수 카운트 | - |
+| 4 | 3자 불일치 | adcprep NP ≠ mpirun NP 또는 ≠ machine 슬롯 | FAIL |
+| 5 | 불일치 출력 | `adcprep=120 / mpirun=120 / machine=240` 형태로 표시 | - |
+
+---
+
+### `check_p2(fort15)` — fort.15 파라미터 검증
+
+| 항목 | 내용 |
+|------|------|
+| **입력** | `fort15: dict` — `parse_fort15()` 반환값 |
+| **반환** | `CheckResult` |
+
+| 체크 항목 | 조건 | 레벨 |
+|-----------|------|------|
+| `DT > 0` | DT ≤ 0 이면 ADCIRC 즉시 오류 | FAIL |
+| `RNDAY > 0` | 모의기간 양수 필수 | FAIL |
+| `RNDAY > DRAMP` | 램프 기간이 모의기간 초과 불가 | FAIL |
+| `IHOT in (0,1,2)` | 그 외 값은 비정의 동작 | FAIL |
+| `STATIM == 0.0` (IHOT=0 시) | 콜드스타트에서 비정수 시작 | WARN |
+
+---
+
+### `check_p3(run_dir, fort15)` — 조건부 필수파일
+
+| 항목 | 내용 |
+|------|------|
+| **입력** | `run_dir: str`, `fort15: dict` |
+| **반환** | `CheckResult` |
+
+| 조건 | 체크 대상 | 레벨 |
+|------|-----------|------|
+| NWS = 0 | 바람장 없음 → 이하 SKIP | SKIP |
+| NWS = ±8 | `fort.221`, `fort.222` 존재 | FAIL |
+| NWS = ±19, ±20 | `fort.22` 존재 | FAIL |
+| NWP > 0 | `fort.13` 존재 | FAIL |
+| NWP > 0 | fort.13 속성 수 == NWP | FAIL |
+| NOLIBF = 2 | fort.13에 `mannings_n_at_sea_floor` 존재 | FAIL |
+| IHOT = 1 | `fort.67` 존재 | FAIL |
+| IHOT = 2 | `fort.68` 존재 | FAIL |
+
+---
+
+### `check_p4(run_dir, fort15)` — 바람장–모의기간 일치
+
+| 항목 | 내용 |
+|------|------|
+| **입력** | `run_dir: str`, `fort15: dict` |
+| **반환** | `CheckResult` |
+
+| # | 구현 항목 | 처리 방법 | 레벨 |
+|---|-----------|-----------|------|
+| 1 | NWS=0 | SKIP | SKIP |
+| 2 | fort.22 시각 파싱 | `re.match(r'^(\d{10})', line)` → `datetime.strptime` | 파싱 실패 → WARN |
+| 3 | 모의 시작 시각 | STATIM(days) + REFTIM(기준일) 변환 | - |
+| 4 | 모의 종료 시각 | 시작 + RNDAY(days) | - |
+| 5 | 트랙 범위 커버 확인 | 첫 트랙 ≤ 시작, 마지막 트랙 ≥ 종료 | 미커버 → FAIL |
+| 6 | 역순·중복 시각 | fort.22 내 시각 단조증가 확인 | 위반 → WARN |
+
+---
+
+### `check_p5(run_dir, fort15)` — Hotstart 타임스탬프
+
+| 항목 | 내용 |
+|------|------|
+| **입력** | `run_dir: str`, `fort15: dict` |
+| **반환** | `CheckResult` |
+
+| # | 구현 항목 | 처리 방법 | 레벨 |
+|---|-----------|-----------|------|
+| 1 | IHOT = 0 | SKIP | SKIP |
+| 2 | hotstart 파일 선택 | IHOT=1→fort.67, IHOT=2→fort.68 | - |
+| 3 | 바이너리 타임스탬프 읽기 | Fortran 비정형 레코드: `struct.unpack('>i')` 레코드 길이 → `struct.unpack('>d')` 8byte double | 읽기 실패 → FAIL |
+| 4 | 타임스탬프 비교 | 읽은 값(days) vs fort.15 STATIM | 불일치(허용오차 1e-6) → FAIL |
+| 5 | 불일치 출력 | `hotstart=1.5000 / STATIM=1.0000` 형태 표시 | - |
+
+---
+
+### `check_p6(run_dir, fort15)` — CFL 안정성
+
+| 항목 | 내용 |
+|------|------|
+| **입력** | `run_dir: str`, `fort15: dict` |
+| **반환** | `CheckResult` |
+
+| # | 구현 항목 | 처리 방법 | 레벨 |
+|---|-----------|-----------|------|
+| 1 | `DT > 0` 사전 확인 | DT ≤ 0 → check_p2에서 이미 잡힘, 여기서도 guard | FAIL |
+| 2 | fort.14 헤더 읽기 | 1번째 줄=주석, 2번째 줄=NE NP | 파싱 실패 → WARN |
+| 3 | 격자 클래스 추정 | NP 기준: ≥900,000→50m급, ≥300,000→100m급, ≥100,000→200m급, 그 외→저해상도 | - |
+| 4 | `dx_min` 격자 클래스별 참고값 | 50m=50, 100m=100, 200m=200, 저해상도=500 (단위: m) | - |
+| 5 | `h_max` 참고값 | 격자 클래스별 대표 최대수심 (50m급=100m, 100m급=80m, ...) | - |
+| 6 | C 계산 | `C = sqrt(9.81 × h_max) × DT / dx_min` | - |
+| 7 | `C > 0` 확인 | DT·h_max·dx_min 모두 양수 필수 | 위반 → FAIL |
+| 8 | C 범위 판정 | C ≤ 4 → PASS / 4 < C ≤ 8 → WARN / C > 8 → FAIL | - |
+| 9 | 결과 출력 | `C≈{값:.2f}  (DT={DT}s, dx_min≈{dx}m, h_max≈{h}m)` 형태 | - |
+
+---
+
 ## 전체 개발 일정 요약
 
 | Phase | 구현 항목 | 핵심 함수 | 상태 |

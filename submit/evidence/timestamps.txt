@@ -56,3 +56,4 @@
 [2026-06-30 19:30:23] [#9] 본모델 바람장 디버깅(interpR/NWS 320·20·19) + 시간정렬·노드구성·모니터링도구, PROCESS_LOG 반영
 [2026-07-01 00:00:00] [#5-JM] submit/evidence/timestamps.txt 머지 충돌 해결 (SY·JM 항목 시간순 병합)
 [2026-07-01 00:00:00] [#6-JM] submit/PROCESS_LOG_team_c_JM.md 수정 (ADCIRC mpi.sh 진단 우선순위 P1~P6 정의)
+[2026-07-01 00:01:00] [#7-JM] automation/CHECK_PRIORITY.md 생성 (mpi.sh 수행 전 진단 우선순위 P1-a~P6 문서화)

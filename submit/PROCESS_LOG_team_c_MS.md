@@ -90,7 +90,22 @@
   - **검증은 비실행으로만**: `bash -n`(문법 OK) + 안전가드 동작 + `--help` 확인. **모델(mpirun/padcirc)은 실행하지 않음**(지시대로).
 - 막힘 → 해결: 없음.
 
-### [#5] ...
+### [#5] 수행 가능 세팅 — 입력/권한 블로커 진단 + setup_run.sh 작성
+- 작성자(팀원): MS (C팀 팀장)
+- 목표: 수동 수행이 실제로 가능하도록 소스 폴더의 수행 블로커를 찾아 보정 세팅(모델은 실행 안 함).
+- 에이전트에게 시킨 것(실제 프롬프트 핵심 인용):
+  > "수행이 가능하도록 세팅이 필요함"
+- 사용한 기법(있으면): (b) 외부 도구·데이터 연동 — 실행파일 strings/소스 grep으로 입력경로 추적 / (c) 재사용 산출물 — setup_run.sh
+- 결과 (진단으로 확인된 블로커):
+  - (1) `Wind/typhoon.in` 누락 — hotstart/onlytide/Model 실행파일이 `../Wind/typhoon.in`을 읽는데 파일이 없음(루트 typhoon.in=NARITEST만 존재).
+  - (2) `Run_NDMI_wind.csh`의 `cp -f ../typhoon.in ./`가 주석 → 매 수행 시 (1) 재발.
+  - (3) `Model/hotstart/padcirc`·`Model/onlytide/padcirc` 실행권한 없음.
+  - (참고/미보정) `Model/hotstart`·`onlytide` 수행스크립트는 아직 레거시 992코어 고정(`np=992`, wave01~28) → 83번 서버 가변코어 미대응. 모델담당(SY)과 협의 필요로 미수정.
+  - `automation/setup_run.sh`(--check 점검 / --apply 보정, 백업 포함) 작성. **--check로 실제 폴더 진단 통과(변경 없음)**.
+- 막힘 → 해결:
+  - 타 사용자(syjeong) 폴더 직접 수정이 자동모드에서 차단 → 보정 로직을 setup_run.sh로 분리해 팀장이 직접 --apply 실행하도록 함. 모델은 미실행.
+
+### [#6] ...
 (필요한 만큼 계속 추가)
 
 ---

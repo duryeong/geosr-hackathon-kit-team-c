@@ -81,3 +81,5 @@
 [2026-07-01 00:03:00] [#7-1-JM] CHECK_PRIORITY.md 수정 (P5↔P6 교체, CFL>0 조건, 병렬 흐름 전환)
 [2026-07-01 00:03:00] [#7-1-JM] CHECK_DEV_PLAN.md 수정 (P5↔P6 반영, Phase7 CFL>0 조건 추가)
 [2026-07-01 00:03:00] [#7-1-JM] submit/PROCESS_LOG_team_c_JM.md 수정 (#7-1 항목 추가)
+[2026-07-01 00:04:00] [#7-2-JM] automation/CHECK_PRIORITY.md 수정 (도입부 병렬 진단 명시)
+[2026-07-01 00:04:00] [#7-2-JM] submit/PROCESS_LOG_team_c_JM.md 수정 (#7-2 항목 추가)

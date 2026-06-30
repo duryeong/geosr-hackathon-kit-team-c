@@ -27,26 +27,37 @@
 
 | 항목 | 내용 |
 |------|------|
-| 모델 | padcirc (ADCIRC v49, SWAN 미연동) |
-| 서버 | 83번 서버, 2노드 |
-| 코어 | 총 120코어 (노드당 60코어) |
+| 모델 | padcirc (ADCIRC, SWAN 미연동) |
+| 실행파일 | `build/` 의 표준 ADCIRC 빌드 (Intel oneAPI MPI 2021.5.1) |
+| 서버 | 83번 서버 (멀티노드 가능) |
+| 코어 | **가변** — 상황에 맞게 조절 (스크립트 인자로 지정) |
 | 격자 | `999_lteacd_edit.grd` — 484,505 노드 / 258,046 요소 |
 | 시간간격 | DT = 1 초 |
 
-### 힌남노 기준 예상 수행 시간 (padcirc, 120코어)
+### 힌남노 기준 예상 수행 시간 (padcirc)
+
+코어 수는 가변. 아래는 6일(힌남노 전체, 약 518,400 스텝) 모의 기준 코어수별 추정:
+
+| 코어 수 | 노드/코어 | 예상 벽시간(6일 모의) | 비고 |
+|--------|----------|---------------------|------|
+| 60코어  | ≈ 8,075 | **약 9~15시간** | 통신부하 적으나 코어 부족 |
+| 120코어 | ≈ 4,038 | **약 5~8시간**  | 균형 잡힌 구성 |
+| 240코어 | ≈ 2,019 | **약 3~5시간**  | 스케일링 효율 점감 시작 |
+
+모의 기간별(120코어 기준):
 
 | 모의 기간 | 시간스텝 수 | 예상 벽시간 |
 |-----------|------------|------------|
 | 3일 (RNDAY=3) | 259,200 | **약 2~4시간** |
 | 5일 (RNDAY=5) | 432,000 | **약 4~7시간** |
-| 6일 힌남노 전체 (Sep 1~7) | 518,400 | **약 5~8시간** |
+| 6일 전체 (Sep 1~7) | 518,400 | **약 5~8시간** |
 
 > **산출 근거**
-> - 노드당 처리량: 484,505 노드 / 120코어 ≈ 4,038 노드/코어 (최적 범위)
 > - padcirc는 padcswan 대비 SWAN 연동 오버헤드가 없어 시간스텝당 약 1.3~1.5배 빠름
-> - 기존 padcswan@992코어 대비: padcirc@120코어 ≈ 992/120 × 1.4 ≈ 약 11.6배 느림
-> - Hotstart 사용 시 조위 스핀업(1~2일) 제외 → 실질 모의 3~5일로 단축 가능
-> - 단, 실제 벽시간은 서버 CPU 사양·MPI 성능에 따라 ±30% 차이 발생 가능
+> - ADCIRC는 코어당 약 2,000~4,000노드 구간에서 병렬효율 최적 → 120코어 부근이 균형점
+> - 코어를 240 이상으로 늘리면 통신 비중 증가로 선형 단축은 점차 둔화
+> - Hotstart 사용 시 조위 스핀업(1~2일) 제외 → 실질 모의기간 단축 가능
+> - 실제 벽시간은 서버 CPU 사양·MPI 성능에 따라 ±30% 차이 발생 가능
 
 ---
 
@@ -55,6 +66,10 @@
 ```
 /data1/syjeong/2026/Inundation/02_Hackathon/
 ├── 제안자료_v3.pptx
+├── build/                              # ★ ADCIRC 실행파일 (표준 빌드)
+│   ├── padcirc                         #   - 모델 본체
+│   ├── adcprep                         #   - 도메인 분할
+│   └── aswip                           #   - 바람장 전처리
 ├── TY_scripts(Crontab)/
 │   └── check-tsw_hotstart.sh           # 통보문 수집 크론탭 스크립트 (5분 주기)
 ├── source_GEO_Edit_2025(0927)/
@@ -70,54 +85,55 @@
 │   ├── Model/
 │   │   ├── Runp_NDMI_Model.csh         # padcswan 원본 (참고용)
 │   │   ├── Runp_NDMI_Model_padcirc.csh # padcirc 전용 ← 이걸 쓸 것
-│   │   ├── padcirc                     # ★ 사용자 제공 필요 (83번 서버 컴파일본)
-│   │   ├── adcprep                     # ★ 사용자 제공 필요 (83번 서버 컴파일본)
+│   │   ├── padcirc / adcprep / aswip   # build/ 에서 복사 완료 (실행권한 부여됨)
 │   │   ├── fort.13 / fort.14           # 격자·조도 파일
 │   │   └── ...
 │   └── Post/                           # FigureGen 가시화
 └── geosr-hackathon-kit-team-c/         # 이 저장소
 ```
 
-### ★ 사용자 제공 필요 실행파일
-
-| 파일 | 위치 | 비고 |
-|------|------|------|
-| `padcirc` | `Model/` | 83번 서버 컴파일본 (현재 wave서버용 padcswan만 있음) |
-| `adcprep` | `Model/` | 83번 서버 컴파일본 (현재 992p 바이너리는 wave서버 전용) |
+> 실행파일(`padcirc`/`adcprep`/`aswip`)은 `build/` → `Model/` 로 복사 완료.
+> 의존성: Intel oneAPI MPI 2021.5.1 (`/appl/opt/oneapi/mpi/2021.5.1`) — ldd 확인 완료.
 
 ---
 
 ## padcirc 수행 절차
 
-### 1. mpd.hosts 노드명 설정
+### 1. 코어 수 지정 (가변)
 
-[source_GEO_Edit_2025(0927)/Model/Runp_NDMI_Model_padcirc.csh](../source_GEO_Edit_2025(0927)/Model/Runp_NDMI_Model_padcirc.csh) 상단의 노드명을 실제 83번 서버 호스트명으로 변경:
+코어 수는 고정하지 않고 수행 시 인자로 전달한다:
+
+```bash
+csh 02_runp_model_padcirc.csh 120   # 120코어로 수행
+csh 02_runp_model_padcirc.csh 60    # 60코어로 수행
+csh 02_runp_model_padcirc.csh       # 인자 생략 시 기본 120
+```
+
+### 2. (선택) 멀티노드 수행
+
+여러 노드에 걸쳐 돌릴 경우 [Runp_NDMI_Model_padcirc.csh](../source_GEO_Edit_2025(0927)/Model/Runp_NDMI_Model_padcirc.csh) 의
+노드명을 실제 83번 서버 호스트명으로 수정하고 `mpd.hosts` 자동생성 블록을 주석 해제한다.
+단일 노드면 `mpd.hosts` 없이 그대로 수행된다.
 
 ```csh
-set NODE1 = 실제노드1명   # 예: server83-1
-set NODE2 = 실제노드2명   # 예: server83-2
+set NODE1 = 실제노드1명
+set NODE2 = 실제노드2명
 set CORES_PER_NODE = 60
 ```
 
-### 2. 실행파일 배치
-
-```bash
-# padcirc, adcprep를 Model/ 폴더에 복사 후 권한 부여
-cp padcirc /data1/syjeong/2026/Inundation/02_Hackathon/source_GEO_Edit_2025\(0927\)/Model/
-cp adcprep /data1/syjeong/2026/Inundation/02_Hackathon/source_GEO_Edit_2025\(0927\)/Model/
-chmod 755 Model/padcirc Model/adcprep
-```
-
-### 3. 모델 수행
+### 3. 전체 파이프라인 수행
 
 ```bash
 cd /data1/syjeong/2026/Inundation/02_Hackathon/source_GEO_Edit_2025\(0927\)/
 
-csh 01_runp_pre.csh             # 전처리
-csh 02_runp_model_padcirc.csh   # padcirc 수행 (120코어)
-csh 03_runp_onlytide.csh        # 조위 수행
-csh 04_runp_post.csh            # 후처리·가시화
+csh 01_runp_pre.csh                 # 전처리
+csh 02_runp_model_padcirc.csh 120   # padcirc 수행 (코어수 인자)
+csh 03_runp_onlytide.csh            # 조위 수행
+csh 04_runp_post.csh                # 후처리·가시화
 ```
+
+> adcprep는 표준 ADCIRC 2단계(`--partmesh` → `--prepall`)로 분할한다.
+> (구버전 `01~03_adcprep_992p`의 3단계 방식과 다르며, 코어 수를 컴파일에 박지 않아 가변 가능)
 
 ---
 

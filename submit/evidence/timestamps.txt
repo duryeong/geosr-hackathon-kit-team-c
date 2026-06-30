@@ -83,3 +83,5 @@
 [2026-07-01 00:03:00] [#7-1-JM] submit/PROCESS_LOG_team_c_JM.md 수정 (#7-1 항목 추가)
 [2026-07-01 00:04:00] [#7-2-JM] automation/CHECK_PRIORITY.md 수정 (도입부 병렬 진단 명시)
 [2026-07-01 00:04:00] [#7-2-JM] submit/PROCESS_LOG_team_c_JM.md 수정 (#7-2 항목 추가)
+[2026-07-01 00:05:00] [#9-JM] automation/CHECK_DEV_PLAN.md 전면 재작성 (병렬 진단·P5↔P6·CFL>0 반영)
+[2026-07-01 00:05:00] [#9-JM] submit/PROCESS_LOG_team_c_JM.md 수정 (#9 항목 추가)

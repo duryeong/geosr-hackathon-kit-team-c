@@ -227,3 +227,20 @@
   - Phase 3(`parse_fort15`)이 P3~P6 전체의 핵심 의존성임을 식별
 - 막힘 → 해결(있었다면): 없음
 ---
+
+---
+### [#9] CHECK_DEV_PLAN.md 전면 재작성 (병렬 진단 반영)
+- 작성자(팀원): 박지민 (JM)
+- 목표: 최신 CHECK_PRIORITY.md(병렬 진단·P5↔P6·CFL>0) 기준으로 개발 계획서 전면 갱신
+- 에이전트에게 시킨 것(실제 프롬프트 핵심 인용):
+  > "그 우선순위 md 를 사용해서 진단 개발 계획 md 만들어줘"
+- 사용한 기법(있으면): (c) 재사용산출물 — CHECK_PRIORITY.md 기반
+- 결과:
+  - `automation/CHECK_DEV_PLAN.md` 전면 재작성
+  - 설계 원칙 표 추가 (병렬 진단·우선순위=수정순서·즉시 실행·출력 레벨)
+  - `ThreadPoolExecutor` 기반 병렬 실행 구조 코드 예시 추가
+  - Phase 0에 병렬 프레임(`run_parallel()`) 명시
+  - P5=Hotstart(Phase 6), P6=CFL(Phase 7) 순서 반영
+  - Phase 7에 `C > 0` 필수 조건 및 C≤4/4~8/>8 판정 기준 추가
+- 막힘 → 해결(있었다면): 없음
+---

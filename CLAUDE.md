@@ -8,67 +8,118 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-태풍 통보문 수신 → GEO-ADCIRC 수치모형 자동 수행 → 결과 가시화 → AI 의사결정 에이전트 → 보고서 자동 작성을 통합 자동화한다.
+태풍 통보문 수신 → GEO-ADCIRC(padcirc) 수치모형 자동 수행 → 결과 가시화 → AI 의사결정 에이전트 → 보고서 자동 작성을 통합 자동화한다.
 
 ```
 [태풍 통보문 수신]
-     ↓  crontab (5분 주기)
-[수치모형 자동 수행]  ← ADCIRC + SWAN
-     ↓  pre → model → post
+     ↓  crontab (5분 주기) ─ check_typhoon.sh
+[수치모형 자동 수행]  ← padcirc (ADCIRC 단독, SWAN 미연동)
+     ↓  01_pre → 02_model → 03_onlytide → 04_post ─ run_pipeline.sh
 [결과 가시화]         ← FigureGen / GMT
      ↓
-[의사결정 에이전트]   ← AI 위험도 판단
+[의사결정 에이전트]   ← AI 위험도 판단 (Phase 4, 미구현)
      ↓
-[보고서 자동 작성]
+[보고서 자동 작성]    (Phase 5, 미구현)
 ```
+
+## 구현 현황
+
+| Phase | 내용 | 상태 |
+|-------|------|------|
+| 1 — 통보문 감시 | `check_typhoon.sh` (crontab 5분 주기, 영속 상태파일 방식) | ✅ 완료 |
+| 2 — 수치모형 수행 | `run_pipeline.sh` + `run_manual.sh` (padcirc, DRY_RUN 검증 완료) | ✅ 완료 |
+| 3 — 가시화 결과 정리·AI 전달 | `post_to_agent.sh` / GeoTIFF / `flood_stats.csv` | 🔴 미구현 |
+| 4 — AI 위험도 판단 | `ai_decision.py` (Claude API vision) | 🔴 미구현 |
+| 5 — 보고서 자동 작성 | `generate_report.py` | 🔴 미구현 |
 
 ## 서버 작업 경로
 
-실제 모델 스크립트는 로컬이 아닌 서버에 있다:
+실제 모델 스크립트는 **로컬이 아닌 서버**에 있다:
 
 ```
 /data1/syjeong/2026/Inundation/02_Hackathon/
-├── TY_scripts(Crontab)/check-tsw_hotstart.sh   # 태풍 감시 메인 스크립트
+├── build/                              # ADCIRC 실행파일 (padcirc / adcprep / aswip)
+├── TY_scripts(Crontab)/check-tsw_hotstart.sh   # 레거시 감시 스크립트 (참고용)
+├── NB/                                 # 통보문 백업 (NOTICE_BACKUP 패치 후 경로)
 └── source_GEO_Edit_2025(0927)/
-    ├── 01_runp_pre.csh       # 전처리 (바람장·조화분조·hotstart)
-    ├── 02_runp_model.csh     # 본수행 (ADCIRC+SWAN)
-    ├── 03_runp_onlytide.csh  # 조위 전용 수행
-    ├── 04_runp_post.csh      # 후처리·가시화 (FigureGen)
-    └── 05_remove.sh          # 임시파일 정리
+    ├── 01_runp_pre.csh                 # 전처리 (바람장·조화분조·hotstart)
+    ├── 02_runp_model_padcirc.csh       # ★ 본수행 (padcirc, 코어수 인자 가변) — 이걸 쓸 것
+    ├── 02_runp_model.csh               # padcswan 원본 (참고용, 사용 안 함)
+    ├── 03_runp_onlytide.csh            # 조위 전용 수행
+    ├── 04_runp_post.csh                # 후처리·가시화 (FigureGen)
+    ├── 05_remove.sh                    # 임시파일 정리
+    ├── Model/fort.14                   # ★ 사용 격자 (G_100m_utm_msl, 1,091,756 노드)
+    ├── typhoon.in                      # 최신 태풍 통보 (헤더 + 최신 트랙점)
+    └── Wind/mk_pre_fort15_22_26_MUN_v2.2.exe  # 전처리기 바이너리 (경로 패치됨)
 ```
+
+## automation/ 스크립트 (이 저장소)
+
+이 저장소의 `automation/`에 레거시를 현대화한 스크립트가 있다:
+
+| 파일 | 역할 |
+|------|------|
+| `check_typhoon.sh` | 통보문 신규 케이스 감시 → `run_pipeline.sh` 자동 기동 (crontab 5분 주기) |
+| `run_pipeline.sh` | 소스 복사 후 01→02→03→04 자동 수행, `DRY_RUN=1`로 클러스터 없이 흐름 검증 |
+| `run_manual.sh` | 소스 폴더에서 단계별 수동 수행 (확인 있음 / `-y`로 연속 / `-s`로 단일 단계) |
+| `setup_run.sh` | 실행파일·격자파일 배치, 권한 설정 자동화 |
 
 ## 주요 실행 명령어
 
-**크론탭 등록 (태풍 자동 감시)**
+**흐름 검증 (DRY_RUN — 클러스터 없이)**
 ```bash
-crontab -e
-# 추가: */5 * * * * /data1/syjeong/2026/Inundation/02_Hackathon/TY_scripts\(Crontab\)/check-tsw_hotstart.sh
+SRC="/data1/syjeong/2026/Inundation/02_Hackathon/source_GEO_Edit_2025(0927)" \
+RUN="/tmp/geosr_run" NP=120 DRY_RUN=1 \
+./automation/run_pipeline.sh 2026063012_TY01
 ```
 
-**크론탭 실행 전 초기화**
-```bash
-chmod 755 /data1/syjeong/.../check-tsw_hotstart.sh
-echo "1" > /tmp/CASE_CNT && touch /tmp/CASE2
-```
-
-**모델 수동 수행 (테스트)**
+**수동 단계별 수행 (소스 폴더에서)**
 ```bash
 cd /data1/syjeong/2026/Inundation/02_Hackathon/source_GEO_Edit_2025\(0927\)/
-csh 01_runp_pre.csh       # 전처리
-csh 02_runp_model.csh     # 본수행
-csh 03_runp_onlytide.csh  # 조위 수행
-csh 04_runp_post.csh      # 후처리·가시화
+/path/to/automation/run_manual.sh 120     # 120코어, 단계마다 Enter 확인
+/path/to/automation/run_manual.sh -y 120  # 확인 없이 연속 수행
+/path/to/automation/run_manual.sh -s 2 -n 60  # 02_model만 60코어로 수행
 ```
+
+**crontab 등록 (실제 운영)**
+```bash
+crontab -e
+# 아래 추가:
+*/5 * * * * BASE=/data1/syjeong/2026/Inundation/02_Hackathon \
+  DATA_DIR=/path/to/통보문수신폴더 NP=120 \
+  /path/to/automation/check_typhoon.sh >> /path/to/automation/logs/monitor.log 2>&1
+```
+
+**가상태풍(NARITEST) 전체 파이프라인 수행**
+```bash
+cd /data1/syjeong/2026/Inundation/02_Hackathon/source_GEO_Edit_2025\(0927\)/
+csh 01_runp_pre.csh
+csh 02_runp_model_padcirc.csh 120   # 코어수 인자 (기본 120, 권장 240~480)
+csh 03_runp_onlytide.csh
+csh 04_runp_post.csh
+```
+
+## 알려진 이슈 및 해결
+
+**전처리기 NOTICE_BACKUP 경로 패치**
+`Wind/mk_pre_fort15_22_26_MUN_v2.2.exe`에 `/home/storm/GEOSR/2022_v53_geosr/NOTICE_BACKUP/`(47 byte)가 하드코딩됨. storm 계정만 접근 가능하고 재컴파일 불가. → `submit/assets/patch_notice_backup_path.sh`로 동일 길이의 `NB/` 경로로 패치. 원본 백업: `*.exe.orig`.
+
+**omap 경로 잔존**: `fort.8`에 `/home/storm/MIT/omap` 경로도 하드코딩. 바람장 관련으로, 모델 수행 시 접근이 필요하면 동일 방식 패치 또는 운영자 협의 필요.
+
+**통보문 입력 2단계 구조**
+- `NB/2025_90_NARITEST.txt` — 통보문 백업(트랙 1~10)
+- `source_GEO_Edit_2025(0927)/typhoon.in` — 최신 통보(헤더 + 트랙 11)
+전처리기가 둘을 병합 → `fort.22`/`fort.15` 생성.
 
 ## C팀 개인 로그 파일명 규칙
 
-팀원 각자가 **별도 파일**에 로그를 작성한다. `submit/PROCESS_LOG.md`(템플릿)는 직접 수정하지 않는다.
+`submit/PROCESS_LOG.md`(템플릿)는 직접 수정하지 않는다. 팀원 각자 **별도 파일**에 작성:
 
-| 팀원 | 로그 파일 |
-|------|-----------|
-| 정수영 (SY) | `submit/PROCESS_LOG_team_c_SY.md` |
-| MS (팀장) | `submit/PROCESS_LOG_team_c_MS.md` |
-| 박지민 (JM) | `submit/PROCESS_LOG_team_c_JM.md` |
+| 팀원 | 로그 파일 | 담당 |
+|------|-----------|------|
+| 정수영 (SY) | `submit/PROCESS_LOG_team_c_SY.md` | Phase 1~2 (감시·모델) |
+| MS (팀장) | `submit/PROCESS_LOG_team_c_MS.md` | — |
+| 박지민 (JM) | `submit/PROCESS_LOG_team_c_JM.md` | Phase 3~5 (가시화·에이전트·보고서) |
 
 의미 있는 단계가 끝나면 **본인 파일에만** append하고, `submit/evidence/timestamps.txt`에도 한 줄 기록한다.
 

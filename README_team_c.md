@@ -28,89 +28,95 @@
 전체 파이프라인(통보문 → 모델 → 가시화 → 보고서)을 실제 태풍 시즌이 아니어도 구동·검증할 수 있도록,
 **한반도 남동해안(부산·경남)을 직격하는 가상태풍**을 통보문과 동일한 형식으로 만들어 두었다.
 
-- 입력 파일: [source_GEO_Edit_2025(0927)/typhoon.in](../source_GEO_Edit_2025(0927)/typhoon.in)
-- 형식: 실제 통보문 백업(`NOTICE_BACKUP/*.txt`)과 **동일** → 전처리기(`mk_pre_fort15_22_26_MUN_v2.2`)가 그대로 읽음
-- 트랙 길이: 약 2.5일(60시간, 6시간 간격 11개 시점)
+통보문 입력 체계를 그대로 모사하기 위해 **2단계 입력 구조**로 구성했다:
+
+| 파일 | 역할 | 내용 |
+|------|------|------|
+| `NB/2025_90_NARITEST.txt` | 통보문 **백업**(과거 누적) | 트랙 1~6번 시점 |
+| `source_GEO_Edit_2025(0927)/typhoon.in` | **최신 통보** | 헤더 + 트랙 7번 시점 |
+
+전처리기(`mk_pre_fort15_22_26_MUN_v2.2`)가 둘을 병합 → 전체 11시점 트랙으로 `fort.22`/`fort.15` 생성.
+실제 운영에서 통보문이 도착할 때마다 백업에 누적되고 최신본은 typhoon.in으로 들어오는 흐름과 동일하다.
 
 ### 입력 형식
 
 ```
-태풍명  번호  연도
-시각(YYYYMMDDHH, UTC)  더미  더미  위도(×10)  경도(×10)  중심기압(hPa)
+태풍명  번호  연도                                  ← typhoon.in 첫 줄(헤더)
+시각(YYYYMMDDHH, UTC)  더미  더미  위도(×10)  경도(×10)  중심기압(hPa)  ← 트랙점
 ```
 
 > 풍속·최대풍반경은 전처리기가 중심기압에서 자동 산정(Vickery/Willoughby/Powell 공식).
 > 사용자는 **위치와 중심기압만** 입력하면 된다. 위/경도는 0.1도 단위(예: `350` = 35.0°N).
+> (백업 파일은 헤더 없이 트랙점만, typhoon.in은 헤더 포함)
 
-### 가상태풍 트랙 (NARITEST, 2025)
+### 가상태풍 트랙 (NARITEST, 2025) — 검증 완료
+
+빠른 북상으로 1.5일에 압축한 경남 직격 시나리오 (6시간 간격 7시점):
 
 | 시각(UTC) | 위치 | 중심기압 | 단계 |
 |-----------|------|---------|------|
-| 09-01 00Z | 28.0°N 125.0°E | 962 hPa | 제주 남서 먼바다 |
-| 09-01 12Z | 30.5°N 126.2°E | 952 hPa | 북동진하며 발달 |
-| 09-02 00Z | 33.0°N 127.4°E | **945 hPa** | 최성기, 제주 동쪽 통과 |
-| 09-02 12Z | 35.0°N 128.6°E | 955 hPa | 남해안 접근 |
-| 09-02 18Z | 35.7°N 129.2°E | 968 hPa | **경남 상륙** |
-| 09-03 00Z | 36.6°N 129.8°E | 978 hPa | 내륙·동해 진입, 약화 |
-| 09-03 12Z | 38.6°N 131.2°E | 992 hPa | 동해상 소멸기 |
+| 09-01 00Z | 28.5°N 125.5°E | 970 hPa | 제주 남쪽 먼바다 |
+| 09-01 12Z | 31.5°N 127.0°E | 950 hPa | 북상하며 발달 |
+| 09-01 18Z | 33.0°N 127.8°E | **945 hPa** | 최성기 |
+| 09-02 00Z | 34.5°N 128.5°E | 955 hPa | 남해안 접근 |
+| 09-02 06Z | 35.5°N 129.2°E | 965 hPa | **경남 상륙** |
+| 09-02 12Z | 36.8°N 130.0°E | 980 hPa | 동해 진입, 약화 |
+
+> 전처리기 실행 검증 완료: 백업(1~6)+최신(7) 병합 → `Model/fort.22` **7시점** 정상 생성,
+> `Model/fort.8` 모의기간 **4.5일**(트랙 1.5 + 콜드스타트 3), `Model/fort.15` **DT=2초** 확인.
 
 ### 구동 방법
 
 ```bash
 cd /data1/syjeong/2026/Inundation/02_Hackathon/source_GEO_Edit_2025\(0927\)/
 
-# typhoon.in 은 이미 가상태풍으로 작성돼 있음.
-# 전처리기가 참조하는 통보문 백업 경로에 '빈 파일'만 두면
-# → "백업 없음" 분기로 typhoon.in 만 사용해 fort.22/fort.15 생성
-mkdir -p /home/storm/GEOSR/2022_v53_geosr/NOTICE_BACKUP
-touch    /home/storm/GEOSR/2022_v53_geosr/NOTICE_BACKUP/2025_90_NARITEST.txt
+# 입력은 이미 구축돼 있음:
+#   ../NB/2025_90_NARITEST.txt  (통보문 백업, 트랙 1~10)
+#   ./typhoon.in                (최신 통보, 트랙 11)
 
 # 전체 파이프라인 수행
-csh 01_runp_pre.csh                 # typhoon.in → 바람장·fort.22·fort.15
+csh 01_runp_pre.csh                 # typhoon.in + NB → 바람장·fort.22·fort.15
 csh 02_runp_model_padcirc.csh 240   # padcirc 모델 수행 (코어수 인자)
 csh 03_runp_onlytide.csh            # 조위 분리
 csh 04_runp_post.csh                # 가시화
 ```
 
-> **NOTICE_BACKUP 경로 주의**: 전처리기 바이너리에 운영서버 경로
-> `/home/storm/GEOSR/2022_v53_geosr/NOTICE_BACKUP/{연도}_{번호}_{태풍명}.txt` 가 하드코딩돼 있다.
-> 이 경로에 **빈 파일**을 두면 typhoon.in 만으로 동작한다(파일 내용이 있으면 백업+typhoon.in 병합).
-> 해당 디렉토리 생성·쓰기 권한이 없는 서버에서는 운영자에게 경로 준비를 요청한다.
+> **통보문 백업 경로(NB) 처리**: 전처리기 바이너리에 운영서버 경로
+> `/home/storm/GEOSR/2022_v53_geosr/NOTICE_BACKUP/` 가 하드코딩돼 있었다.
+> 이 경로는 storm 유저 전용(700)이라 접근 불가 + 소스 재컴파일도 불가(서브루틴 소스 부재).
+> → **바이너리의 경로 문자열을 동일 길이(47바이트)의 해커톤 폴더 경로
+> `/data1/syjeong/2026/Inundation/02_Hackathon/NB/` 로 패치**하여 해커톤 폴더 안에서 자립 동작하도록 했다.
+> 패치 재현 스크립트: [submit/assets/patch_notice_backup_path.sh](submit/assets/patch_notice_backup_path.sh)
+> 원본 바이너리 백업: `Wind/mk_pre_fort15_22_26_MUN_v2.2.exe.orig`
+
+> ⚠️ **omap 경로 잔존**: `fort.8` 에 `/home/storm/MIT/omap` 경로도 하드코딩돼 있다(바람장 관련).
+> 모델 수행 시 이 경로 접근이 필요하면 동일 방식의 처리 또는 운영자 협의가 필요할 수 있다.
 
 ---
 
-## 수행 환경
+## 수행 환경 (현재 설정)
 
 | 항목 | 내용 |
 |------|------|
-| 모델 | padcirc (ADCIRC, SWAN 미연동) |
+| 모델 | padcirc (ADCIRC 53.dev, SWAN 미연동) |
 | 실행파일 | `build/` 의 표준 ADCIRC 빌드 (Intel oneAPI MPI 2021.5.1) |
-| 서버 | 83번 서버 (멀티노드 가능) |
-| 코어 | **가변** — 상황에 맞게 조절 (스크립트 인자로 지정) |
-| 격자 | `Model/fort.14` (`G_100m_utm_msl`) — **1,091,756 노드 / 580,541 요소** (약 100 m 고해상도) |
-| 좌표계 | 경위도 (ICS=2, CPP 투영) — 이름은 utm이나 노드 좌표는 경위도 |
-| 시간간격 | DT = 1 초 |
+| 노드/코어 | **node4:60 + node6:60 = 120코어** (수행 스크립트에 설정) |
+| 격자 | `Model/fort.14` (`TEST-20130428`, FL grid) — **377,375 노드 / 716,981 요소** (저해상도) |
+| 조도 | `Model/fort.13` — Manning's n (저해상도 격자 일치) |
+| 좌표계 | 경위도 (ICS=2, CPP 투영) |
+| 시간간격 | **DT = 2 초** |
+| 바람 모델 | NWS=20 (GAHM) — ⚠️ 디버깅 중 (아래 "알려진 이슈") |
+| 모의 기간 | **트랙 1.5일** (콜드스타트 제거, 바람장 시간정렬) |
 
-> 격자는 `Model/fort.14`를 사용한다. (`fort_org.14`(48만 노드)는 구버전 저해상도 격자 — 미사용)
+> **수행시간 단축 환경 조정** (테스트베드용):
+> - 격자: 고해상도(109만 요소) → 저해상도 `build/fort.14`(71만 요소). 개방경계 동일(NOPE=3,NETA=154)로 fort.15 조위강제 호환
+> - 조도: 저해상도 전용 `build/fort.13`
+> - DT 1→2초, 트랙 2.5→1.5일
+> - 원본 백업: `*.bak_highres_*`, `fort_org.15.bak_dt1`
 
-### 가상태풍 테스트베드 기준 예상 수행 시간 (padcirc)
-
-테스트베드 트랙(`typhoon.in`)은 약 **2.5일(60시간)** 길이이고, 전처리에 **콜드스타트 3일**이 내장되어
-실제 모의 기간은 **약 5.5일(≈ 475,200 스텝 @ DT=1s)** 이다. 코어수별 추정:
-
-| 코어 수 | 노드/코어 | 예상 벽시간(트랙 2.5일 + 콜드 3일) | 비고 |
-|--------|----------|------------------------------|------|
-| 120코어 | ≈ 9,098 | **약 12~20시간** | 코어당 부하 큼(109만 노드) |
-| 240코어 | ≈ 4,549 | **약 7~12시간**  | 균형점 부근 |
-| 480코어 | ≈ 2,275 | **약 4~7시간**   | 고해상도 격자 권장 구성 |
-
-> **산출 근거**
-> - 격자가 109만 노드(구 48만의 2.25배)로 커서 계산량이 비례 증가
-> - padcirc는 SWAN 미연동이라 시간스텝당 약 1.3~1.5배 빠름
-> - ADCIRC는 코어당 약 2,000~5,000노드 구간에서 병렬효율 최적 → 109만 노드엔 240~480코어 적합
-> - 콜드스타트 3일은 전처리(`mk_pre…`) 소스에 하드코딩(`coldstart_day=3.0`) — 줄이려면 재컴파일 필요
-> - 100 m 격자는 CFL 조건상 DT를 더 줄여야 할 수 있어(0.5s 등) 그 경우 벽시간 비례 증가
-> - 실제 벽시간은 서버 CPU·MPI 성능에 따라 ±30~50% 편차 가능 — 첫 수행 시 `runtime.out`으로 실측 권장
+> **바람장 시간 정렬** (interpR 폭주 방지 핵심):
+> - fort.15 WTIMINC 시작 = fort.22 첫 시각 = `2025-09-01 00시` (0점 정렬)
+> - 콜드스타트 제거: `IHOT=0`, `RNDAY=1.5` → 콜드 구간(바람장 없는 3일)과 바람장의 시간 갭 제거
 
 ---
 
@@ -139,8 +145,10 @@ csh 04_runp_post.csh                # 가시화
 │   │   ├── Runp_NDMI_Model.csh         # padcswan 원본 (참고용)
 │   │   ├── Runp_NDMI_Model_padcirc.csh # padcirc 전용 ← 이걸 쓸 것
 │   │   ├── padcirc / adcprep / aswip   # build/ 에서 복사 완료 (실행권한 부여됨)
-│   │   ├── fort.14                      # ★ 사용 격자 (G_100m_utm_msl, 109만 노드)
-│   │   ├── fort.13                      # 조도(Manning's n) 파일
+│   │   ├── fort.14                      # ★ 사용 격자 (저해상도 FL grid, 37.7만 노드)
+│   │   ├── fort.13                      # 저해상도 격자 전용 조도(Manning's n)
+│   │   ├── fort_org.15                  # fort.15 템플릿 (DT=2초)
+│   │   ├── *.bak_highres_* / *.bak_dt1  # 고해상도 격자·DT1초 원본 백업
 │   │   └── ...
 │   └── Post/                           # FigureGen 가시화
 └── geosr-hackathon-kit-team-c/         # 이 저장소
@@ -153,41 +161,38 @@ csh 04_runp_post.csh                # 가시화
 
 ## padcirc 수행 절차
 
-### 1. 코어 수 지정 (가변)
-
-코어 수는 고정하지 않고 수행 시 인자로 전달한다:
-
-```bash
-csh 02_runp_model_padcirc.csh 120   # 120코어로 수행
-csh 02_runp_model_padcirc.csh 60    # 60코어로 수행
-csh 02_runp_model_padcirc.csh       # 인자 생략 시 기본 120
-```
-
-### 2. (선택) 멀티노드 수행
-
-여러 노드에 걸쳐 돌릴 경우 [Runp_NDMI_Model_padcirc.csh](../source_GEO_Edit_2025(0927)/Model/Runp_NDMI_Model_padcirc.csh) 의
-노드명을 실제 83번 서버 호스트명으로 수정하고 `mpd.hosts` 자동생성 블록을 주석 해제한다.
-단일 노드면 `mpd.hosts` 없이 그대로 수행된다.
-
-```csh
-set NODE1 = 실제노드1명
-set NODE2 = 실제노드2명
-set CORES_PER_NODE = 60
-```
-
-### 3. 전체 파이프라인 수행
+### 0. 환경 로드 (필수 — oneAPI MPI)
 
 ```bash
 cd /data1/syjeong/2026/Inundation/02_Hackathon/source_GEO_Edit_2025\(0927\)/
-
-csh 01_runp_pre.csh                 # 전처리
-csh 02_runp_model_padcirc.csh 120   # padcirc 수행 (코어수 인자)
-csh 03_runp_onlytide.csh            # 조위 수행
-csh 04_runp_post.csh                # 후처리·가시화
+source /appl/opt/oneapi/setvars.sh
+export I_MPI_HYDRA_BOOTSTRAP=ssh
+ulimit -s unlimited
+ulimit -f 400000        # 로그 폭주(interpR 등) 디스크 보호
 ```
 
-> adcprep는 표준 ADCIRC 2단계(`--partmesh` → `--prepall`)로 분할한다.
-> (구버전 `01~03_adcprep_992p`의 3단계 방식과 다르며, 코어 수를 컴파일에 박지 않아 가변 가능)
+### 1. 시작 전 정리 (이전 잔재 제거)
+
+```bash
+# 내 모델 프로세스 정리 (comm 기반 — pkill -f 는 자기 명령까지 죽이니 금지)
+ps -u $USER -o pid,comm | awk '/padcirc|mpirun|hydra/{print $1}' | xargs -r kill -9
+# 분할(PE) 삭제
+find . -maxdepth 3 -name "PE0*" -type d -exec rm -rf {} +
+```
+
+### 2. 전체 파이프라인
+
+```bash
+csh 01_runp_pre.csh              # 바람장 → fort.15 → hotstart 모델 (검증됨 ✓)
+csh 02_runp_model_padcirc.csh    # 본모델 padcirc (node4+6=120) ⚠️ 바람장 이슈
+csh 03_runp_onlytide.csh         # 조위 → surge 분리
+csh 04_runp_post.csh             # 가시화
+# 또는 한 번에:  bash run_all_padcirc.sh
+```
+
+> - 노드: `Runp_*.csh` 에 `node4:60 + node6:60` 설정됨. 변경 시 각 스크립트의 mpd.hosts 블록 수정.
+> - adcprep 표준 2단계(`--partmesh` → `--prepall`). 구버전 `01~03_adcprep_992p`(wave서버 전용) 대체.
+> - 백그라운드 수행 시 셸 종료에 안 죽도록 `nohup` 또는 독립 백그라운드로 실행.
 
 ---
 
@@ -233,3 +238,52 @@ submit/
 ├── assets/
 └── evidence/timestamps.txt
 ```
+
+---
+
+## 실시간 모니터링 도구
+
+```bash
+bash flow.sh        # 파이프라인 흐름도 (3초마다 갱신, 단계별 ●완료/◐수행중/✗실패/○대기)
+bash flow.sh --once # 1회만
+bash status.sh      # 단계별 산출물 상세 현황
+pbsnodes node4 node6 | grep -E "loadave|state"   # 노드 부하 (ssh 대신 — ssh 남발 금지)
+```
+
+> ⚠️ 노드 상태 확인은 `pbsnodes`로. `ssh node*` 를 반복하면 hang 세션이 쌓여 클러스터 ssh가 막히고,
+> `psh compute uptime` 같은 정상 명령까지 영향받는다.
+
+---
+
+## 수행 기록 / 트러블슈팅 (재현용)
+
+전체 파이프라인을 클러스터에서 돌리며 해결한 이슈들:
+
+| 증상 | 원인 | 해결 |
+|------|------|------|
+| adcprep "station does not lie in grid" | 제주 등 일부 관측소가 저해상도 격자 밖 | fort.61(관측소) 제거, fort.63(전역) 1시간만 출력 |
+| padcirc **SIGNAL 9 (Killed)** | fort.13(mannings) ↔ fort.15(chezy) **마찰 속성 불일치** | fort.15·생성스크립트 모두 `mannings_n_at_sea_floor` 로 통일 |
+| ssh bootstrap 실패 (`cannot launch`) | ssh 일시 포화 (확인용 ssh 남발) | 회복 후 재시도, pbsnodes로 확인 |
+| NOTICE_BACKUP 접근 불가 | `/home/storm` storm 유저 700 | 바이너리 경로를 해커톤 폴더로 패치([assets](submit/assets/patch_notice_backup_path.sh)) |
+| 바람장 시간 갭 interpR | 콜드스타트(바람없음) ↔ 바람장 3일 갬 | 콜드 제거, WTIMINC=fort.22 첫시각 정렬 |
+
+**검증 완료:** 01 PRE(바람장·fort.15·hotstart fort.68) ✅
+
+---
+
+## ⚠️ 알려진 이슈 (미해결): 본모델 태풍 바람장
+
+- **증상:** 본모델 padcirc가 `ERROR: interpR failed in nws20get` 를 폭주 출력 (로그 GB급 → OOM/디스크)
+- **원인:** padcirc(단독) GAHM 바람모델 ↔ fort.22 호환 문제
+  | NWS | 결과 |
+  |-----|------|
+  | 320 (원본값) | interpR 폭주 — 파력(SWAN) 옵션, SWAN 없는 padcirc엔 부적합 |
+  | 20 (GAHM) | interpR 폭주 — isotach 반경 보간 실패 (aswip가 `-m 4` 없이 호출돼 isotach 1개) |
+  | 19 | fort.22 형식 불일치 (`input conversion error`) |
+- **참고:** 원본(힌남노/종다리)은 **padc*swan*(SWAN 연동) + NWS=320** 으로 정상 — isotach 개수는 동일.
+  즉 빌드(padcirc) ↔ fort.22 GAHM 호환이 핵심으로 추정.
+- **다음 스텝(택1):**
+  1. 원 모델 운영 팀원에게 *build/padcirc 단독 GAHM 설정(fort.15/fort.22/aswip)* 문의 — 가장 확실
+  2. `Model/padcswan`(SWAN 연동) 방식으로 — 입력 구성 복잡
+  3. 바람 없이(`NWS=0`) 조위만 일단 완주 → 파이프라인 동작·가시화 데모
+- **재발 방지:** 수행 시 `ulimit -f` 로 로그 크기 제한 (디스크 보호)

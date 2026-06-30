@@ -1,3 +1,79 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+---
+
+# C팀 프로젝트 — 태풍 자동화 파이프라인
+
+## 프로젝트 개요
+
+태풍 통보문 수신 → GEO-ADCIRC 수치모형 자동 수행 → 결과 가시화 → AI 의사결정 에이전트 → 보고서 자동 작성을 통합 자동화한다.
+
+```
+[태풍 통보문 수신]
+     ↓  crontab (5분 주기)
+[수치모형 자동 수행]  ← ADCIRC + SWAN
+     ↓  pre → model → post
+[결과 가시화]         ← FigureGen / GMT
+     ↓
+[의사결정 에이전트]   ← AI 위험도 판단
+     ↓
+[보고서 자동 작성]
+```
+
+## 서버 작업 경로
+
+실제 모델 스크립트는 로컬이 아닌 서버에 있다:
+
+```
+/data1/syjeong/2026/Inundation/02_Hackathon/
+├── TY_scripts(Crontab)/check-tsw_hotstart.sh   # 태풍 감시 메인 스크립트
+└── source_GEO_Edit_2025(0927)/
+    ├── 01_runp_pre.csh       # 전처리 (바람장·조화분조·hotstart)
+    ├── 02_runp_model.csh     # 본수행 (ADCIRC+SWAN)
+    ├── 03_runp_onlytide.csh  # 조위 전용 수행
+    ├── 04_runp_post.csh      # 후처리·가시화 (FigureGen)
+    └── 05_remove.sh          # 임시파일 정리
+```
+
+## 주요 실행 명령어
+
+**크론탭 등록 (태풍 자동 감시)**
+```bash
+crontab -e
+# 추가: */5 * * * * /data1/syjeong/2026/Inundation/02_Hackathon/TY_scripts\(Crontab\)/check-tsw_hotstart.sh
+```
+
+**크론탭 실행 전 초기화**
+```bash
+chmod 755 /data1/syjeong/.../check-tsw_hotstart.sh
+echo "1" > /tmp/CASE_CNT && touch /tmp/CASE2
+```
+
+**모델 수동 수행 (테스트)**
+```bash
+cd /data1/syjeong/2026/Inundation/02_Hackathon/source_GEO_Edit_2025\(0927\)/
+csh 01_runp_pre.csh       # 전처리
+csh 02_runp_model.csh     # 본수행
+csh 03_runp_onlytide.csh  # 조위 수행
+csh 04_runp_post.csh      # 후처리·가시화
+```
+
+## C팀 개인 로그 파일명 규칙
+
+팀원 각자가 **별도 파일**에 로그를 작성한다. `submit/PROCESS_LOG.md`(템플릿)는 직접 수정하지 않는다.
+
+| 팀원 | 로그 파일 |
+|------|-----------|
+| 정수영 (SY) | `submit/PROCESS_LOG_team_c_SY.md` |
+| MS (팀장) | `submit/PROCESS_LOG_team_c_MS.md` |
+| 박지민 (JM) | `submit/PROCESS_LOG_team_c_JM.md` |
+
+의미 있는 단계가 끝나면 **본인 파일에만** append하고, `submit/evidence/timestamps.txt`에도 한 줄 기록한다.
+
+---
+
 # 예보사업부 AI·AX 해커톤 — 작업 규칙 (이 파일은 자동 로드됩니다)
 
 너는 이 해커톤 참가팀의 개발을 돕는 에이전트다. 아래 규칙을 끝까지 지켜라.

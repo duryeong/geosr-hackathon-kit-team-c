@@ -1,0 +1,27 @@
+# OS·에디터 잡파일
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# 비밀키·환경설정 (절대 업로드 금지)
+.env
+*.pem
+*.key
+secrets/
+
+# 파이썬
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 대용량·민감 데이터 (원본 관측자료 등 — 외부 업로드 금지)
+data/
+*.nc
+*.tif
+*.hdf
+*.h5
+
+# (주의) submit/ 은 제출물이므로 ignore 하지 않음

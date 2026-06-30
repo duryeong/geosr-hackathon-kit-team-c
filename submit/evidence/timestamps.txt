@@ -6,7 +6,27 @@
 2026-06-30 13:31:52  automation/run_pipeline.sh
 2026-06-30 13:32:11  automation/check_typhoon.sh
 2026-06-30 13:33:15  automation/README.md
+2026-06-30 15:20:18  automation/agent/claude_client.py   # [#6] Phase 4~5 AI 의사결정·보고서
+2026-06-30 15:20:37  automation/agent/risk.py
+2026-06-30 15:21:28  automation/agent/ai_decision.py
+2026-06-30 15:23:05  automation/agent/generate_report.py
+2026-06-30 15:22:27  automation/samples/model_results_NARITEST.json
+2026-06-30 15:23:38  automation/post_to_agent.sh
 
+2026-06-30 15:34:07  automation/agent/claude_client.py   # [#7] Claude Code CLI 전환
+2026-06-30 15:37:25  automation/agent/server.py           # [#7] 외부접근 대시보드 서버
+2026-06-30 15:43:38  automation/agent/serve.sh
+2026-06-30 15:55:04  automation/agent/scenario.py   # [#8] ultracode 멀티에이전트 풀 시나리오 파이프라인
+2026-06-30 15:56:54  automation/agent/server.py
+2026-06-30 16:01:31  automation/agent/web/scenario.html
+2026-06-30 16:00:55  automation/monitor_scenario.sh
+2026-06-30 16:00:08  automation/agent/advisory_feed.py
+2026-06-30 16:10:49  automation/agent/scenario.py   # [#9] GUI 2:1 재구성 + 공간장 3종(바람장/해수위/해일고)
+2026-06-30 16:11:29  automation/agent/server.py
+2026-06-30 16:16:00  automation/agent/web/scenario.html
+2026-06-30 16:40:01  automation/agent/ingest_model_output.py   # [#11] JONGDARI 실측 ADCIRC → 대시보드 케이스
+2026-06-30 17:03:30  automation/agent/ingest_model_output.py   # [#13] 전면 실측화(해일고=fort.63−onlytide, 바람장=fort.74)
+2026-06-30 20:20:00  automation/self_heal_adcirc.sh   # [#14] ADCIRC sample_run 자가치유 순환구조(4중게이트+소넷 fort.15 수정+누적 FIX_JOURNAL)
 ## JM (박지민)
 [2026-06-30 13:18:53] submit/PROCESS_LOG_team_c_JM.md 생성
 [2026-06-30 13:20:51] [#2] C팀 README 작성 및 git 푸시 — README.md 교체, .gitignore 머지, GitHub push 완료

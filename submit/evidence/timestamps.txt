@@ -85,3 +85,5 @@
 [2026-07-01 00:04:00] [#7-2-JM] submit/PROCESS_LOG_team_c_JM.md 수정 (#7-2 항목 추가)
 [2026-07-01 00:05:00] [#9-JM] automation/CHECK_DEV_PLAN.md 전면 재작성 (병렬 진단·P5↔P6·CFL>0 반영)
 [2026-07-01 00:05:00] [#9-JM] submit/PROCESS_LOG_team_c_JM.md 수정 (#9 항목 추가)
+[2026-07-01 00:06:00] [#10-JM] automation/CHECK_DEV_PLAN.md 수정 (함수별 세부 개발 내용 표 추가)
+[2026-07-01 00:06:00] [#10-JM] submit/PROCESS_LOG_team_c_JM.md 수정 (#10 항목 추가)

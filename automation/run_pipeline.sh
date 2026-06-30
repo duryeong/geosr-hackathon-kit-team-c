@@ -22,6 +22,7 @@ set -u
 CASE="${1:-}"
 SRC="${SRC:-}"
 RUN="${RUN:-}"
+NP="${NP:-120}"                   # padcirc 코어 수 (가변, 기본 120)
 DRY_RUN="${DRY_RUN:-0}"           # 1이면 모델 실행 안 하고 흐름만 검증
 LOG_DIR="${LOG_DIR:-$(pwd)/logs}"
 
@@ -44,6 +45,8 @@ log "=============================================================="
 log "CASE      : $CASE"
 log "SRC       : $SRC"
 log "RUN(work) : $WORK"
+log "MODEL     : padcirc (ADCIRC 단독, SWAN 미연동)"
+log "NP(코어)  : $NP"
 log "DRY_RUN   : $DRY_RUN"
 log "=============================================================="
 
@@ -68,21 +71,23 @@ fi
 # ---- 단계 실행기 -----------------------------------------------------------
 run_step() {
   local name="$1"; shift
-  local script="$1"
-  log "----- [$name] 시작: $script -----"
+  local script="$1"; shift
+  local args="$*"
+  log "----- [$name] 시작: $script $args -----"
   if [ "$DRY_RUN" = "1" ]; then
-    log "      (dry) csh $script  ← 실제 실행 생략"
+    log "      (dry) csh $script $args  ← 실제 실행 생략"
     sleep 1
   else
     [ -f "$script" ] || die "[$name] 스크립트 없음: $script"
-    csh "$script" >>"$LOG" 2>&1 || die "[$name] 실행 실패 (로그: $LOG)"
+    csh "$script" $args >>"$LOG" 2>&1 || die "[$name] 실행 실패 (로그: $LOG)"
   fi
   log "----- [$name] 완료 -----"
 }
 
-# ---- 파이프라인 (정정된 순서) ---------------------------------------------
+# ---- 파이프라인 (정정된 순서 + padcirc 전환 반영) -------------------------
+#   모델 본수행: padcswan(02_runp_model.csh) → padcirc(02_runp_model_padcirc.csh <코어수>)
 run_step "01_PRE  (바람장·hotstart·조위 전처리)" "01_runp_pre.csh"
-run_step "02_MODEL(ADCIRC+SWAN 본수행)"          "02_runp_model.csh"
+run_step "02_MODEL(padcirc 본수행, np=$NP)"      "02_runp_model_padcirc.csh" "$NP"
 run_step "03_TIDE (조위 전용 수행)"               "03_runp_onlytide.csh"
 run_step "04_POST (FigureGen 가시화)"             "04_runp_post.csh"
 

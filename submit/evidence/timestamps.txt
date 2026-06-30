@@ -13,4 +13,5 @@
 [2026-06-30 13:43:26] [#3] padcirc 스크립트 작성 — Runp_NDMI_Model_padcirc.csh, 02_runp_model_padcirc.csh 생성, README_team_c.md 수행환경 업데이트
 [2026-06-30 13:43:31] [#3] padcirc 스크립트 작성 — Runp_NDMI_Model_padcirc.csh, 02_runp_model_padcirc.csh 생성, README_team_c.md 수행환경 업데이트
 [2026-06-30 13:49:04] [#4] build 실행파일 배치, adcprep 표준 2단계 적용, 코어 가변화
+[2026-06-30 13:58:16] [#5] 가상태풍 테스트베드(typhoon.in) 구축 + 격자 fort.14(109만노드) 정정, README 가상태풍 섹션 추가
 [2026-06-30 14:01:07] WORK_PLAN_JM.md 생성

@@ -19,5 +19,39 @@
 [2026-06-30 14:08:28] [#6] NOTICE_BACKUP 경로 해커톤폴더 이전(바이너리 패치) + 통보문 백업 구조 구축, 전처리 검증 성공(fort.22 11시점)
 [2026-06-30 14:13:02] WORK_PLAN_JM.md 수정 (전체 Work Plan + Phase별 세부 개발 내용 표 추가)
 [2026-06-30 14:33:53] [#7] 수행시간 단축: 저해상도 격자(37.7만노드)·DT 2초·트랙 1.5일(7점), 전처리 검증(fort.8 4.5일)
+[2026-06-30 15:27:43] PHASE5_REPORT_DEV.md 생성
+[2026-06-30 15:28:18] submit/PROCESS_LOG_team_c_JM.md 수정
+[2026-06-30 15:54:02] CLAUDE/hwpx_output/*.hwpx 생성 (10개)
+[2026-06-30 15:54:02] CLAUDE/md_to_hwpx.py 생성
 [2026-06-30 15:57:35] [#8] 가상태풍 모델 수행 환경 구축·디버깅 (저해상도격자/DT2/fort.63 1시간/마찰속성 mannings 통일/노드구성/flow.sh)
+[2026-06-30 16:03:39] CLAUDE/hwpx_output/REPORT_TEMPLATE.hwpx 생성
+[2026-06-30 16:03:39] CLAUDE/REPORT_VARIABLES.md 생성
+[2026-06-30 16:03:39] CLAUDE/build_report_template.py 생성
+[2026-06-30 16:13:02] CLAUDE/hwpx_output/REPORT_TEMPLATE.hwpx 수정 (v2)
+[2026-06-30 16:13:02] CLAUDE/REPORT_VARIABLES.md 수정 (v2)
+[2026-06-30 16:37:02] CLAUDE/opersys.py 생성
+[2026-06-30 16:37:02] CLAUDE/step1_gen_fake_data.py 생성
+[2026-06-30 16:37:02] CLAUDE/step2_plot_risk_map.py 생성
+[2026-06-30 16:37:02] CLAUDE/step3_plot_surge_ts.py 생성
+[2026-06-30 16:37:02] CLAUDE/step4_generate_report.py 생성
+[2026-06-30 16:37:02] post/2026_01_FAKETY_202606240000_west/ 생성 (CSV 37개 / 그림 39개 / 보고서 1개)
+[2026-06-30 17:01:50] post/step3_plot_surge_ts.py 수정
+[2026-06-30 17:01:50] post/step4_generate_report.py 수정
+[2026-06-30 17:01:50] post/2024_09_JONGDARI_202408201600_west/report/report_2024_09_JONGDARI_202408201600_west.hwpx 생성
+[2026-06-30 17:03:50] post/2024_09_JONGDARI_202408201600_west/report/report_2024_09_JONGDARI_202408201600_west.hwpx 수정
+[2026-06-30 17:09:18] post/REPORT_VARIABLES.md 생성
+[2026-06-30 17:09:18] post/build_report_template.py 생성
+[2026-06-30 17:09:18] post/REPORT_TEMPLATE.hwpx 생성
+[2026-06-30 17:09:18] post/step4_generate_report.py 수정
+[2026-06-30 17:09:18] post/2024_09_JONGDARI_202408201600_west/report/report_2024_09_JONGDARI_202408201600_west.hwpx 수정
+[2026-06-30 17:21:58] post/step1_gen_fake_data.py 수정
+[2026-06-30 17:21:58] post/step3_plot_surge_ts.py 수정
+[2026-06-30 17:21:58] post/step4_generate_report.py 수정
+[2026-06-30 17:21:58] post/2024_09_JONGDARI_202408201600_west/report/report_2024_09_JONGDARI_202408201600_west.hwpx 수정
+[2026-06-30 18:52:03] post/build_report_template.py 수정
+[2026-06-30 18:52:03] post/REPORT_VARIABLES.md 수정
+[2026-06-30 18:52:03] post/REPORT_TEMPLATE.hwpx 수정
+[2026-06-30 18:52:03] post/2024_09_JONGDARI_202408201600_west/report/report_2024_09_JONGDARI_202408201600_west.hwpx 수정
 [2026-06-30 19:07:17] [#9] 모델 수행·디버깅 README 반영 (node4+6/NWS/시간정렬/트러블슈팅/알려진이슈), flow.sh·status.sh assets 추가
+[2026-07-01 00:00:00] [#5] submit/evidence/timestamps.txt 머지 충돌 해결 (SY·JM 항목 시간순 병합)
+[2026-07-01 00:00:00] [#6] submit/PROCESS_LOG_team_c_JM.md 수정 (ADCIRC mpi.sh 진단 우선순위 P1~P6 정의)

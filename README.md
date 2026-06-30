@@ -1,129 +1,82 @@
-# C팀 — 태풍 발생부터 의사결정 보고서 작성까지 전 과정 자동화
+# 예보사업부 AI·AX 해커톤 — 스타터 킷
 
-> 26년 예보사업부 AI·AX 해커톤 | 2026.6.30(화)~7.1(수) | 엘리스랩 부산센터
+2026.6.30(화)~7.1(수) · 엘리스랩 부산센터 · 예보사업부 9개 팀
 
-## 프로젝트 개요
-
-태풍 통보문 수신 → 수치모형(GEO-ADCIRC) 자동 수행 → 결과 가시화 → 의사결정 에이전트 기반 보고서 작성까지,
-담당자가 수작업으로 개입하던 전 과정을 통합 자동화 체계로 구현한다.
-
-```
-[태풍 통보문 수신]
-     ↓  crontab (5분 주기 감시)
-[수치모형 자동 수행]  ← ADCIRC + SWAN 연동
-     ↓  pre → model → post
-[결과 가시화]         ← FigureGen / GMT 자동 생성
-     ↓
-[의사결정 에이전트]   ← AI 기반 위험도 판단
-     ↓
-[보고서 자동 작성]
-```
+이 저장소를 받아서 **그 폴더에서 바로 작업**하면, 표준 헤더가 자동 로드되고 작업 기록이 `submit/` 폴더에 자동으로 쌓입니다. 마지막에 폴더째 압축해 제출하면 끝.
 
 ---
 
-## 작업 폴더 위치 (서버 공용)
+## 받는 법 (둘 중 하나)
 
-```
-/data1/syjeong/2026/Inundation/02_Hackathon/
-├── 제안자료_v3.pptx                     # 프로젝트 제안 발표자료 (상세 기획 참고)
-├── TY_scripts(Crontab)/                 # 태풍 통보문 수집 크론탭 스크립트
-│   └── check-tsw_hotstart.sh           # 메인 감시 스크립트 (5분 주기 실행)
-├── source_GEO_Edit_2025(0927)/          # GEO-ADCIRC 모델 수행 자동화 소스코드
-│   ├── 01_runp_pre.csh                 # 전처리 (바람장·조화분조·hotstart 생성)
-│   ├── 02_runp_model.csh               # 모델 본수행 (ADCIRC+SWAN)
-│   ├── 03_runp_onlytide.csh            # 조위만 수행 (폭풍해일 산출용)
-│   ├── 04_runp_post.csh                # 후처리 (FigureGen 가시화)
-│   ├── 05_remove.sh                    # 임시파일 정리
-│   ├── Wind/                           # 바람장 생성 스크립트·입력파일
-│   ├── hotstart/                       # Hotstart 초기장 생성
-│   ├── onlytide/                       # 조위 전용 수행
-│   ├── Model/                          # ADCIRC 실행파일·격자파일(fort.13/14)
-│   └── Post/                           # 후처리 실행파일·FigureGen 설정파일
-└── geosr-hackathon-kit-team-c/         # 이 저장소 (해커톤 킷 + 작업로그)
-```
-
----
-
-## 크론탭 설정 방법
-
-태풍 통보문 감시 스크립트를 5분 주기로 실행하도록 크론탭에 등록한다.
-
+**A. git으로 (권장 — 팀 협업에 유리)**
 ```bash
-# 크론탭 편집
-crontab -e
-
-# 아래 한 줄 추가
-*/5 * * * * /data1/syjeong/2026/Inundation/02_Hackathon/TY_scripts\(Crontab\)/check-tsw_hotstart.sh
+git clone https://github.com/limitda83/geosr-hackathon-kit.git
+cd geosr-hackathon-kit
 ```
 
-스크립트 실행 전 사전 준비:
+**B. 다운로드 (git 몰라도 됨)**
+- 이 페이지 위쪽 녹색 **`Code` ▾ → `Download ZIP`** → 압축 풀기.
 
-```bash
-# 실행 권한 확인
-chmod 755 /data1/syjeong/2026/Inundation/02_Hackathon/TY_scripts\(Crontab\)/check-tsw_hotstart.sh
+---
 
-# 케이스 카운터 초기화
-echo "1" > /tmp/CASE_CNT
-touch /tmp/CASE2
+## 쓰는 법 (3단계)
+
+1. **이 폴더를 도구로 연다.**
+   - Claude Code: 이 폴더에서 `claude` 실행 → `CLAUDE.md` 자동 로드
+   - Codex: 이 폴더에서 실행 → `AGENTS.md` 자동 로드
+   - Cursor: 이 폴더 열기 → `.cursorrules` 자동 로드
+   - ChatGPT 등 챗형: `CLAUDE.md` 내용을 대화 맨 처음에 붙여넣기
+2. **그냥 작업한다.** 에이전트가 시작할 때 팀명·팀원·주제·기존 방식(Before)을 먼저 물어보고, 작업하며 `submit/`에 기록을 자동으로 쌓아 준다.
+3. **제출한다.** 마감(Day1 21:30~22:00) 전에 `submit/CHECKLIST.md`로 점검(에이전트에게 "제출 점검해줘") → **폴더 전체를 압축(zip)** 해 운영자에게 제출.
+
+---
+
+## 폴더 구조
+
+```
+geosr-hackathon-kit/
+├─ START.md                              시작 안내
+├─ CLAUDE.md / AGENTS.md / .cursorrules  도구별 자동 로드(내용 동일 = 표준 헤더)
+└─ submit/                               제출물 (여기를 채워 폴더째 제출)
+   ├─ CHECKLIST.md     제출 점검표
+   ├─ PROCESS_LOG.md   작업 기록(과정 70점 근거) + 효과 측정
+   ├─ BEFORE_AFTER.md  수작업 → 에이전트화 비교(효과)
+   ├─ assets/          재사용 자산(프롬프트/스킬/CLAUDE.md 사본)
+   └─ evidence/        증빙(자동 timestamps / 세션 export는 선택)
 ```
 
 ---
 
-## 모델 수동 수행 (테스트용)
+## 팀 협업 (3~4명이 한 주제를)
 
-```bash
-cd /data1/syjeong/2026/Inundation/02_Hackathon/source_GEO_Edit_2025\(0927\)/
+- **공통과제 = 팀 1주제.** 회의로 정한 그 주제를 **파트로 나눠** 각자 맡는다(예: 데이터 전처리 / 분석 프롬프트 / 결과·보고 자동화).
+- **각자 본인 계정·본인 PC**로 에이전트를 쓰고, **개인별로 PROCESS_LOG를 따로** 남긴다. 에이전트는 시작할 때 **팀명·본인 이름만** 물어본다(팀원 전원 이름 X).
+- **PROCESS_LOG 제출은 개인별**: 각자 본인 로그를 **영문 파일명** `<팀영문명>_<이름로마자>_PROCESS_LOG.md`(예: `teamA_kim_PROCESS_LOG.md`)로 저장해 제출한다. 한글 파일명은 압축 시 깨지므로 금지(한글 이름은 파일 안에). 운영자가 팀별로 모아 채점하고, **전원 참여(③)는 팀별 개인 로그 수 + Day2 1인 60초 미니시연**으로 확인한다.
+- 코드·산출물 공유는 편한 방법으로: git(fork/clone, 커밋이력은 ① 가점) / 공유 드라이브 / 각자 작업 후 합치기. **git은 필수 아님.**
+- 팀 공통 산출물(동작물·Before/After·발표자료)은 **팀당 1번**, 개인 로그는 **각자** 제출.
 
-csh 01_runp_pre.csh       # 전처리
-csh 02_runp_model.csh     # 본수행
-csh 03_runp_onlytide.csh  # 조위 수행
-csh 04_runp_post.csh      # 후처리·가시화
-```
-
----
-
-## 팀원 작업폴더 접근
-
-서버 내 팀원이라면 아래 경로로 직접 접근 가능하다:
-
-```
-/data1/syjeong/2026/Inundation/02_Hackathon/
-```
-
-이 저장소(해커톤 킷) 클론:
-
-```bash
-git clone https://github.com/duryeong/geosr-hackathon-kit-team-c.git
-cd geosr-hackathon-kit-team-c
-```
-
-Claude Code에서 작업 시 이 폴더에서 `claude` 실행 → `CLAUDE.md` 자동 로드.
+> **git은 필수가 아니다.** 채점은 git 사용 능력에 의존하지 않는다 — 잘 쓰면 ① 가점일 뿐.
 
 ---
 
-## 제출 구조
+## 기존 프로젝트에서 작업하려면 (킷 폴더 대신 내 repo에서)
 
-```
-geosr-hackathon-kit-team-c/
-└── submit/
-    ├── PROCESS_LOG_team_c_SY.md    # 정수영 작업 로그 (과정 70점 근거)
-    ├── BEFORE_AFTER.md             # 수작업 → 자동화 효과 측정
-    ├── assets/                     # 재사용 프롬프트·스킬
-    └── evidence/timestamps.txt     # 자동 타임스탬프 증빙
-```
-
-> 과정 70 : 결과 30 채점 구조. `submit/` 로그가 곧 점수.
+1. 이 저장소의 `CLAUDE.md`(또는 `AGENTS.md`/`.cursorrules`)를 **너의 프로젝트 루트에 복사**.
+2. 이 저장소의 **`submit/` 폴더를 통째로 복사**해 너의 프로젝트 루트에 둔다. (없으면 에이전트에게 "submit 폴더와 양식 만들어줘"라고 시켜도 됨 — 헤더가 알아서 생성)
+3. 끝. 이제 킷 쓰는 팀과 동일하게 `submit/`에 자동 기록된다.
 
 ---
 
-## 채점 기준 (참고)
+## 채점 한눈에 (총 100점)
 
-| 항목 | 배점 |
-|------|------|
-| 활용 깊이 (서브에이전트·도구연동·재사용산출물) | 25 |
-| 재현·전파성 (다른 팀이 그대로 쓸 수 있는가) | 25 |
-| 전원 참여 | 10 |
-| 문제 정의 | 10 |
-| 동작 완성도 (데모) | 15 |
-| 업무 임팩트 | 12 |
-| 자유과제 | 3 |
+- **과정 70 (AI가 `submit/` 기록으로 채점)**: 활용 깊이 25 · 재현·전파성 25 · 전원참여 10 · 문제정의 10
+- **결과 30 (심사위원 라이브 데모)**: 동작 완성도 15 · 업무 임팩트 12 · 자유과제 3
+- 화려함보다 **재현 가능한 노하우**가 이긴다.
+
+## 🔒 보안
+
+외부 AI에 **미공개 관측 원본·개인정보·대외비 좌표/수치 업로드 금지.** 공개/익명화 데이터만.
+
+---
+
+대회 종합 안내(기획안·공지·일정)는 노션 **「26년 예보사업부 AI·AX 해커톤 대회 안내」** 페이지 참고. 문의: 운영팀 / 박영민 이사
